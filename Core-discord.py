@@ -324,4 +324,4 @@ async def ticketkontakt(ctx):   #System Ticketów
 
     await ctx.send(embed=embed, view=view)
 
-bot.run('MTE2ODI5NTk1MDM0NzkzNTg2Ng.GIhhzh.v4IlI91fe-JJO2ERrt8qwbLkOI31Xkiz7enqeY')
+bot.run('Tu powienien być token')
