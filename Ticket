@@ -1,0 +1,65 @@
+@bot.command()
+@commands.has_permissions(kick_members=True)
+async def ticket(ctx):   #System Ticketów
+    category_data = {
+        "1": {
+            "name": "Pomoc ogólna",
+            "description": "Wybierz tę kategori",
+        },
+        "2": {
+            "name": "Pomoc techniczna",
+            "description": "Wybierz tę kategorie",
+        },
+        "3": {
+            "name": "Zgłoś błąd",
+            "description": "Wybierz tę kategorie",
+        }
+    }
+
+    async def create_ticket(interaction):
+        try:
+            guild = ctx.guild
+            overwrites = {
+                guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                interaction.user: discord.PermissionOverwrite(read_messages=True)
+            }
+            ticket_channel = await guild.create_text_channel(f'zloszenie-{interaction.user.display_name}', overwrites=overwrites)
+            await ticket_channel.send(f"{interaction.user.mention}")
+
+            close_button = discord.ui.Button(style=discord.ButtonStyle.red, label="Zamknij zgloszenie")
+
+            async def close_ticket(interaction):
+                await ticket_channel.delete()
+
+            close_button.callback = close_ticket
+
+            selected_category_value = interaction.data["values"][0]
+            selected_category_data = category_data.get(selected_category_value, {"name": "Nieznana kategoria", "description": "Brak opisu"})
+
+            close_embed = discord.Embed(
+                title="Zgłoszenie",
+                description=f"Kategoria: {selected_category_data['name']}\nOpisz swój problem, personel wkrótce zajmnie się twoją sprawą! Prosimy o cierpliwość i nie oznaczanie personelu\nKliknij poniższy przycisk, aby zamknąć ticket.",
+                color=discord.Color.red()
+            )
+
+            view = discord.ui.View()
+            view.add_item(close_button)
+
+            await ticket_channel.send(embed=close_embed, view=view)
+        except Exception as e:
+            await interaction.response.send('Wystąpił błąd podczas tworzenia ticketu:', ephemeral=True)
+
+    select_options = [
+        discord.SelectOption(label=category_data[value]['name'], value=value)
+        for value in category_data
+    ]
+
+    select = discord.ui.Select(placeholder="Wybierz kategorię", options=select_options)
+    select.callback = create_ticket
+
+    embed = discord.Embed(title="Utwórz zgłoszenie", description="Aby otrzymać pomoc od personelu, rozwiń listę poniżej wiadomości. Zostaniesz przekierowany na kanał w którym opiszesz swój problem. Prośmy o cierpliwość", color=discord.Color.green())
+
+    view = discord.ui.View()
+    view.add_item(select)
+
+    await ctx.send(embed=embed, view=view)
